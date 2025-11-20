@@ -45,7 +45,7 @@ function MapComponent({ token }) {
 
   useEffect(() => {
     if (token) {
-      fetch('http://backend:3001/markers', {
+      fetch('http://localhost:3001/markers', {
         headers: { Authorization: `Bearer ${token}` },
       })
         .then(res => {
@@ -55,7 +55,7 @@ function MapComponent({ token }) {
         .then(setMarkers)
         .catch(() => setMarkers([]));
 
-      fetch('http://backend:3001/polygons', {
+      fetch('http://localhost:3001/polygons', {
         headers: { Authorization: `Bearer ${token}` },
       })
         .then(res => {
@@ -69,7 +69,7 @@ function MapComponent({ token }) {
 
   const saveMarkers = (newMarkers) => {
     setMarkers(newMarkers);
-    fetch('http://backend:3001/markers', {
+    fetch('http://localhost:3001/markers', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -81,7 +81,7 @@ function MapComponent({ token }) {
 
   const savePolygons = (newPolygons) => {
     setPolygons(newPolygons);
-    fetch('http://backend:3001/polygons', {
+    fetch('http://localhost:3001/polygons', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
