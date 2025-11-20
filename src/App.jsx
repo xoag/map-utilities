@@ -63,7 +63,7 @@ function App() {
   };
 
   return (
-    <MapContainer center={center} zoom={zoom} style={{ height: '100%', width: '100%' }} onClick={handleMapClick} onMoveEnd={handleMoveEnd} onZoomEnd={handleZoomEnd}>
+    <MapContainer center={center} zoom={zoom} style={{ height: '100%', width: '100%' }} onClick={handleMapClick} onMove={handleMoveEnd} onZoom={handleZoomEnd}>
       <TileLayer
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
