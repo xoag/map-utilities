@@ -42,6 +42,7 @@ function MapComponent({ token }) {
   const [markers, setMarkers] = useState([]);
   const [polygons, setPolygons] = useState([]);
   const [editingLabel, setEditingLabel] = useState({ index: -1, label: '' });
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     if (token) {
@@ -114,8 +115,28 @@ function MapComponent({ token }) {
     return [lat, lng];
   };
 
-  const handleLabelChange = (index, label) => {
-    setEditingLabel({ index, label });
+  const handleSearch = async (e) => {
+    e.preventDefault();
+    if (!searchQuery.trim()) return;
+    try {
+      const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}&limit=1`);
+      const data = await res.json();
+      if (data.length > 0) {
+        const { lat, lon } = data[0];
+        // Assuming map is available, but since it's in MapContainer, need to use useMap hook or something.
+        // For simplicity, store in localStorage or use a ref.
+        // Actually, since MapContainer is below, perhaps use a callback.
+        // To keep simple, alert or just set localStorage for center.
+        localStorage.setItem('center', JSON.stringify([parseFloat(lat), parseFloat(lon)]));
+        localStorage.setItem('zoom', '15');
+        window.location.reload(); // Reload to apply new center
+      } else {
+        alert('Location not found');
+      }
+    } catch (error) {
+      console.error('Search error:', error);
+      alert('Error searching location');
+    }
   };
 
   const saveLabel = (index) => {
@@ -139,6 +160,47 @@ function MapComponent({ token }) {
           box-shadow: 0 6px 20px rgba(0,0,0,0.3) !important;
         }
       `}} />
+      <div style={{
+        position: 'absolute',
+        top: '10px',
+        left: '50%',
+        transform: 'translateX(-50%)',
+        zIndex: 1000,
+        background: 'white',
+        padding: '10px',
+        borderRadius: '5px',
+        boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
+        display: 'flex',
+        gap: '5px',
+      }}>
+        <form onSubmit={handleSearch} style={{ display: 'flex', gap: '5px' }}>
+          <input
+            type="text"
+            placeholder="Search places..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            style={{
+              padding: '8px',
+              border: '1px solid #ddd',
+              borderRadius: '3px',
+              width: '200px',
+            }}
+          />
+          <button
+            type="submit"
+            style={{
+              padding: '8px 12px',
+              background: '#007bff',
+              color: 'white',
+              border: 'none',
+              borderRadius: '3px',
+              cursor: 'pointer',
+            }}
+          >
+            Search
+          </button>
+        </form>
+      </div>
       <button
         onClick={() => {
           window.location.href = '/profile';
