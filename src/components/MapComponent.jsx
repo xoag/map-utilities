@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, Polygon, FeatureGroup, useMapEvents, useMap } from 'react-leaflet';
 import { EditControl } from 'react-leaflet-draw';
 import 'leaflet-draw/dist/leaflet.draw.css';
-import L, { DivIcon } from 'leaflet';
+import L from 'leaflet';
 
 // Fix default marker icon
 delete L.Icon.Default.prototype._getIconUrl;
@@ -48,14 +48,22 @@ function MapComponent({ token }) {
       fetch('http://localhost:3001/markers', {
         headers: { Authorization: `Bearer ${token}` },
       })
-        .then(res => res.json())
-        .then(setMarkers);
+        .then(res => {
+          if (!res.ok) throw new Error('Failed to fetch markers');
+          return res.json();
+        })
+        .then(setMarkers)
+        .catch(() => setMarkers([]));
 
       fetch('http://localhost:3001/polygons', {
         headers: { Authorization: `Bearer ${token}` },
       })
-        .then(res => res.json())
-        .then(setPolygons);
+        .then(res => {
+          if (!res.ok) throw new Error('Failed to fetch polygons');
+          return res.json();
+        })
+        .then(setPolygons)
+        .catch(() => setPolygons([]));
     }
   }, [token]);
 
@@ -129,15 +137,6 @@ function MapComponent({ token }) {
         .leaflet-draw-draw-polygon:hover {
           transform: translateY(-2px) !important;
           box-shadow: 0 6px 20px rgba(0,0,0,0.3) !important;
-        }
-        .polygon-label {
-          background: none;
-          border: none;
-          color: black;
-          font-weight: bold;
-          font-size: 14px;
-          text-align: center;
-          pointer-events: none;
         }
       `}} />
       <button
@@ -216,7 +215,7 @@ function MapComponent({ token }) {
             {poly.label && (
               <Marker
                 position={getCenter(poly.coords)}
-                icon={new DivIcon({ html: poly.label, className: 'polygon-label' })}
+                icon={L.divIcon({ html: `<div style="display: inline-block; background: rgba(65,105,225,0.4); border: 1px solid #ccc; border-radius: 4px; color: red; font-weight: bold; font-size: 14px; padding: 1px 2px; white-space: nowrap; pointer-events: none;">${poly.label}</div>` })}
               />
             )}
           </div>
