@@ -3,6 +3,7 @@ import { MapContainer, TileLayer, Marker, Popup, Polygon, FeatureGroup, useMapEv
 import { EditControl } from 'react-leaflet-draw';
 import 'leaflet-draw/dist/leaflet.draw.css';
 import L from 'leaflet';
+import 'leaflet-geometryutil';
 
 // Fix default marker icon
 delete L.Icon.Default.prototype._getIconUrl;
@@ -109,12 +110,14 @@ function MapComponent({ token }) {
     }
   };
 
-  const getCenter = (coords) => {
-    const lats = coords.map(c => c[0]);
-    const lngs = coords.map(c => c[1]);
-    const lat = lats.reduce((a, b) => a + b) / lats.length;
-    const lng = lngs.reduce((a, b) => a + b) / lngs.length;
-    return [lat, lng];
+  const calculateArea = (coords) => {
+    const latlngs = coords.map(c => L.latLng(c[0], c[1]));
+    const area = L.GeometryUtil.geodesicArea(latlngs);
+    if (area < 1000000) {
+      return (area / 1000).toFixed(2) + ' m²';
+    } else {
+      return (area / 1000000).toFixed(2) + ' km²';
+    }
   };
 
   const handleSearchInput = async (query) => {
@@ -340,6 +343,8 @@ function MapComponent({ token }) {
             <Polygon positions={poly.coords}>
               <Popup>
                 <div>
+                  <strong>Polygon {index + 1}</strong><br />
+                  Area: {calculateArea(poly.coords)}<br />
                   <input
                     type="text"
                     placeholder="Label"
