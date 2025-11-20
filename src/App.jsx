@@ -80,11 +80,31 @@ function App() {
       />
       {markers.map((marker, index) => (
         <Marker key={index} position={[marker.lat, marker.lng]}>
-          <Popup>Marker {index + 1}</Popup>
+          <Popup>
+            Marker {index + 1}
+            <br />
+            <button onClick={() => {
+              setMarkers(prev => {
+                const newMarkers = prev.filter((_, i) => i !== index);
+                localStorage.setItem('markers', JSON.stringify(newMarkers));
+                return newMarkers;
+              });
+            }}>Delete Marker</button>
+          </Popup>
         </Marker>
       ))}
       {polygons.map((poly, index) => (
-        <Polygon key={index} positions={poly} />
+        <Polygon key={index} positions={poly}>
+          <Popup>
+            <button onClick={() => {
+              setPolygons(prev => {
+                const newPoly = prev.filter((_, i) => i !== index);
+                localStorage.setItem('polygons', JSON.stringify(newPoly));
+                return newPoly;
+              });
+            }}>Delete Polygon</button>
+          </Popup>
+        </Polygon>
       ))}
       <FeatureGroup>
         <EditControl
