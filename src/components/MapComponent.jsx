@@ -3,7 +3,6 @@ import { MapContainer, TileLayer, Marker, Popup, Polygon, FeatureGroup, useMapEv
 import { EditControl } from 'react-leaflet-draw';
 import 'leaflet-draw/dist/leaflet.draw.css';
 import L from 'leaflet';
-import 'leaflet-geometryutil';
 
 // Fix default marker icon
 delete L.Icon.Default.prototype._getIconUrl;
@@ -111,12 +110,21 @@ function MapComponent({ token }) {
   };
 
   const calculateArea = (coords) => {
-    const latlngs = coords.map(c => L.latLng(c[0], c[1]));
-    const area = L.GeometryUtil.geodesicArea(latlngs);
-    if (area < 1000000) {
-      return (area / 1000).toFixed(2) + ' m²';
+    // Simple approximation using planar geometry (not geodesic)
+    if (coords.length < 3) return '0 m²';
+    let area = 0;
+    for (let i = 0; i < coords.length; i++) {
+      const j = (i + 1) % coords.length;
+      area += coords[i][1] * coords[j][0];
+      area -= coords[j][1] * coords[i][0];
+    }
+    area = Math.abs(area) / 2;
+    // Approximate meters squared (rough, not accurate for large areas)
+    const meters = area * 111319.5 * 111319.5 * Math.cos((coords[0][0] * Math.PI) / 180);
+    if (meters < 1000000) {
+      return meters.toFixed(0) + ' m²';
     } else {
-      return (area / 1000000).toFixed(2) + ' km²';
+      return (meters / 1000000).toFixed(2) + ' km²';
     }
   };
 
