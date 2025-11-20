@@ -85,6 +85,22 @@ app.post('/login', (req, res) => {
   });
 });
 
+// Change password
+app.post('/change-password', authenticateToken, async (req, res) => {
+  const { currentPassword, newPassword } = req.body;
+  db.get('SELECT password_hash FROM users WHERE id = ?', [req.user.id], async (err, row) => {
+    if (err) return res.status(500).json({ error: 'Database error' });
+    if (!row || !(await bcrypt.compare(currentPassword, row.password_hash))) {
+      return res.status(400).json({ error: 'Current password is incorrect' });
+    }
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    db.run('UPDATE users SET password_hash = ? WHERE id = ?', [hashedPassword, req.user.id], function(err) {
+      if (err) return res.status(500).json({ error: 'Database error' });
+      res.json({ message: 'Password updated successfully' });
+    });
+  });
+});
+
 // Get polygons
 app.get('/polygons', authenticateToken, (req, res) => {
   db.all('SELECT coords, label FROM polygons WHERE user_id = ?', [req.user.id], (err, rows) => {

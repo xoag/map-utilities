@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import Login from './components/Login';
 import Register from './components/Register';
 import MapComponent from './components/MapComponent';
+import Profile from './components/Profile';
 
 function App() {
   const [token, setToken] = useState(localStorage.getItem('token'));
@@ -21,6 +22,7 @@ function App() {
         <Route path="/" element={token ? <Navigate to="/map" /> : <Login setToken={setToken} />} />
         <Route path="/register" element={<Register />} />
         <Route path="/map" element={token ? <MapComponent token={token} /> : <Navigate to="/" />} />
+        <Route path="/profile" element={token ? <Profile /> : <Navigate to="/" />} />
       </Routes>
     </Router>
   );

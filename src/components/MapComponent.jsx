@@ -141,6 +141,39 @@ function MapComponent({ token }) {
       `}} />
       <button
         onClick={() => {
+          window.location.href = '/profile';
+        }}
+        style={{
+          position: 'absolute',
+          bottom: '10px',
+          left: '120px',
+          zIndex: 1000,
+          padding: '12px 20px',
+          background: 'linear-gradient(135deg, #28a745 0%, #20c997 100%)',
+          color: 'white',
+          border: 'none',
+          borderRadius: '5px',
+          fontSize: '14px',
+          fontWeight: 'bold',
+          cursor: 'pointer',
+          boxShadow: '0 4px 15px rgba(0,0,0,0.2)',
+          transition: 'all 0.3s ease',
+        }}
+        onMouseOver={(e) => {
+          e.target.style.background = 'linear-gradient(135deg, #218838 0%, #17a2b8 100%)';
+          e.target.style.transform = 'translateY(-2px)';
+          e.target.style.boxShadow = '0 6px 20px rgba(0,0,0,0.3)';
+        }}
+        onMouseOut={(e) => {
+          e.target.style.background = 'linear-gradient(135deg, #28a745 0%, #20c997 100%)';
+          e.target.style.transform = 'translateY(0)';
+          e.target.style.boxShadow = '0 4px 15px rgba(0,0,0,0.2)';
+        }}
+      >
+        Profile
+      </button>
+      <button
+        onClick={() => {
           localStorage.removeItem('token');
           window.location.href = '/';
         }}
