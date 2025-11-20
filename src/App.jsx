@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, Polygon, FeatureGroup, useMapEvents } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, Polygon, FeatureGroup, useMapEvents, useMap } from 'react-leaflet';
 import { EditControl } from 'react-leaflet-draw';
 import 'leaflet-draw/dist/leaflet.draw.css';
 import L from 'leaflet';
@@ -26,21 +26,27 @@ function MapEvents() {
   return null;
 }
 
+function SetInitialView() {
+  const map = useMap();
+  useEffect(() => {
+    const savedCenter = localStorage.getItem('center');
+    const savedZoom = localStorage.getItem('zoom');
+    if (savedCenter && savedZoom) {
+      map.setView(JSON.parse(savedCenter), parseInt(savedZoom));
+    }
+  }, [map]);
+  return null;
+}
+
 function App() {
   const [markers, setMarkers] = useState([]);
   const [polygons, setPolygons] = useState([]);
-  const [center, setCenter] = useState([51.505, -0.09]);
-  const [zoom, setZoom] = useState(13);
 
   useEffect(() => {
     const savedMarkers = localStorage.getItem('markers');
     if (savedMarkers) setMarkers(JSON.parse(savedMarkers));
     const savedPolygons = localStorage.getItem('polygons');
     if (savedPolygons) setPolygons(JSON.parse(savedPolygons));
-    const savedCenter = localStorage.getItem('center');
-    if (savedCenter) setCenter(JSON.parse(savedCenter));
-    const savedZoom = localStorage.getItem('zoom');
-    if (savedZoom) setZoom(parseInt(savedZoom));
   }, []);
 
   const handleMapClick = (e) => {
@@ -65,7 +71,8 @@ function App() {
   };
 
   return (
-    <MapContainer center={center} zoom={zoom} style={{ height: '100%', width: '100%' }} onClick={handleMapClick}>
+    <MapContainer center={[51.505, -0.09]} zoom={13} style={{ height: '100%', width: '100%' }} onClick={handleMapClick}>
+      <SetInitialView />
       <MapEvents />
       <TileLayer
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
