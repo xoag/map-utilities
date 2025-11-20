@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, Polygon, FeatureGroup } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, Polygon, FeatureGroup, useMapEvents } from 'react-leaflet';
 import { EditControl } from 'react-leaflet-draw';
 import 'leaflet-draw/dist/leaflet.draw.css';
 import L from 'leaflet';
@@ -11,6 +11,20 @@ L.Icon.Default.mergeOptions({
   iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
 });
+
+function MapEvents() {
+  useMapEvents({
+    move: (e) => {
+      const center = e.target.getCenter();
+      localStorage.setItem('center', JSON.stringify([center.lat, center.lng]));
+    },
+    zoom: (e) => {
+      const zoom = e.target.getZoom();
+      localStorage.setItem('zoom', zoom.toString());
+    },
+  });
+  return null;
+}
 
 function App() {
   const [markers, setMarkers] = useState([]);
@@ -50,20 +64,9 @@ function App() {
     }
   };
 
-  const handleMoveEnd = (e) => {
-    const newCenter = e.target.getCenter();
-    setCenter([newCenter.lat, newCenter.lng]);
-    localStorage.setItem('center', JSON.stringify([newCenter.lat, newCenter.lng]));
-  };
-
-  const handleZoomEnd = (e) => {
-    const newZoom = e.target.getZoom();
-    setZoom(newZoom);
-    localStorage.setItem('zoom', newZoom.toString());
-  };
-
   return (
-    <MapContainer center={center} zoom={zoom} style={{ height: '100%', width: '100%' }} onClick={handleMapClick} onMove={handleMoveEnd} onZoom={handleZoomEnd}>
+    <MapContainer center={center} zoom={zoom} style={{ height: '100%', width: '100%' }} onClick={handleMapClick}>
+      <MapEvents />
       <TileLayer
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
