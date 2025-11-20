@@ -12,7 +12,7 @@ app.use(cors());
 app.use(express.json());
 
 // Initialize database
-const db = new sqlite3.Database('./database.db');
+const db = new sqlite3.Database('./data/database.db');
 
 db.serialize(() => {
   db.run(`CREATE TABLE IF NOT EXISTS users (

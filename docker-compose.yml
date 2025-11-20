@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   backend:
     build:
@@ -8,7 +6,7 @@ services:
     ports:
       - "3001:3001"
     volumes:
-      - db_data:/app/database.db
+      - db_data:/app/data
     environment:
       - NODE_ENV=production
 
