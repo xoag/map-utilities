@@ -98,50 +98,70 @@ function MapComponent({ token }) {
   };
 
   return (
-    <MapContainer center={[51.505, -0.09]} zoom={13} style={{ height: '100vh', width: '100%' }} onClick={handleMapClick}>
-      <SetInitialView />
-      <MapEvents />
-      <TileLayer
-        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-      />
-      {markers.map((marker, index) => (
-        <Marker key={index} position={[marker.lat, marker.lng]}>
-          <Popup>
-            Marker {index + 1}
-            <br />
-            <button onClick={() => {
-              const newMarkers = markers.filter((_, i) => i !== index);
-              saveMarkers(newMarkers);
-            }}>Delete Marker</button>
-          </Popup>
-        </Marker>
-      ))}
-      {polygons.map((poly, index) => (
-        <Polygon key={index} positions={poly}>
-          <Popup>
-            <button onClick={() => {
-              const newPolygons = polygons.filter((_, i) => i !== index);
-              savePolygons(newPolygons);
-            }}>Delete Polygon</button>
-          </Popup>
-        </Polygon>
-      ))}
-      <FeatureGroup>
-        <EditControl
-          position="topright"
-          onCreated={handleCreated}
-          draw={{
-            rectangle: false,
-            circle: false,
-            circlemarker: false,
-            marker: false,
-            polygon: true,
-            polyline: false,
-          }}
+    <div style={{ position: 'relative' }}>
+      <button
+        onClick={() => {
+          localStorage.removeItem('token');
+          window.location.href = '/';
+        }}
+        style={{
+          position: 'absolute',
+          top: '10px',
+          left: '10px',
+          zIndex: 1000,
+          padding: '10px',
+          background: 'white',
+          border: '1px solid #ccc',
+          cursor: 'pointer'
+        }}
+      >
+        Logout
+      </button>
+      <MapContainer center={[51.505, -0.09]} zoom={13} style={{ height: '100vh', width: '100%' }} onClick={handleMapClick}>
+        <SetInitialView />
+        <MapEvents />
+        <TileLayer
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         />
-      </FeatureGroup>
-    </MapContainer>
+        {markers.map((marker, index) => (
+          <Marker key={index} position={[marker.lat, marker.lng]}>
+            <Popup>
+              Marker {index + 1}
+              <br />
+              <button onClick={() => {
+                const newMarkers = markers.filter((_, i) => i !== index);
+                saveMarkers(newMarkers);
+              }}>Delete Marker</button>
+            </Popup>
+          </Marker>
+        ))}
+        {polygons.map((poly, index) => (
+          <Polygon key={index} positions={poly}>
+            <Popup>
+              <button onClick={() => {
+                const newPolygons = polygons.filter((_, i) => i !== index);
+                savePolygons(newPolygons);
+              }}>Delete Polygon</button>
+            </Popup>
+          </Polygon>
+        ))}
+        <FeatureGroup>
+          <EditControl
+            position="topright"
+            onCreated={handleCreated}
+            draw={{
+              rectangle: false,
+              circle: false,
+              circlemarker: false,
+              marker: false,
+              polygon: true,
+              polyline: false,
+            }}
+          />
+        </FeatureGroup>
+      </MapContainer>
+    </div>
   );
 }
 
