@@ -43,6 +43,8 @@ function MapComponent({ token }) {
   const [polygons, setPolygons] = useState([]);
   const [editingLabel, setEditingLabel] = useState({ index: -1, label: '' });
   const [searchQuery, setSearchQuery] = useState('');
+  const [suggestions, setSuggestions] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
 
   useEffect(() => {
     if (token) {
@@ -115,27 +117,38 @@ function MapComponent({ token }) {
     return [lat, lng];
   };
 
-  const handleSearch = async (e) => {
-    e.preventDefault();
-    if (!searchQuery.trim()) return;
-    try {
-      const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}&limit=1`);
-      const data = await res.json();
-      if (data.length > 0) {
-        const { lat, lon } = data[0];
-        // Assuming map is available, but since it's in MapContainer, need to use useMap hook or something.
-        // For simplicity, store in localStorage or use a ref.
-        // Actually, since MapContainer is below, perhaps use a callback.
-        // To keep simple, alert or just set localStorage for center.
-        localStorage.setItem('center', JSON.stringify([parseFloat(lat), parseFloat(lon)]));
-        localStorage.setItem('zoom', '15');
-        window.location.reload(); // Reload to apply new center
-      } else {
-        alert('Location not found');
+  const handleSearchInput = async (query) => {
+    setSearchQuery(query);
+    if (query.trim().length > 2) {
+      try {
+        const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&addressdetails=1`);
+        const data = await res.json();
+        setSuggestions(data);
+        setShowSuggestions(true);
+      } catch (error) {
+        console.error('Search error:', error);
+        setSuggestions([]);
+        setShowSuggestions(false);
       }
-    } catch (error) {
-      console.error('Search error:', error);
-      alert('Error searching location');
+    } else {
+      setSuggestions([]);
+      setShowSuggestions(false);
+    }
+  };
+
+  const handleSelectSuggestion = (suggestion) => {
+    const { lat, lon } = suggestion;
+    localStorage.setItem('center', JSON.stringify([parseFloat(lat), parseFloat(lon)]));
+    localStorage.setItem('zoom', '15');
+    setSearchQuery(suggestion.display_name);
+    setShowSuggestions(false);
+    window.location.reload();
+  };
+
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+    if (suggestions.length > 0) {
+      handleSelectSuggestion(suggestions[0]);
     }
   };
 
@@ -171,14 +184,16 @@ function MapComponent({ token }) {
         borderRadius: '5px',
         boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
         display: 'flex',
+        flexDirection: 'column',
         gap: '5px',
+        minWidth: '250px',
       }}>
-        <form onSubmit={handleSearch} style={{ display: 'flex', gap: '5px' }}>
+        <form onSubmit={handleSearchSubmit} style={{ display: 'flex', gap: '5px', position: 'relative' }}>
           <input
             type="text"
             placeholder="Search places..."
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={(e) => handleSearchInput(e.target.value)}
             style={{
               padding: '8px',
               border: '1px solid #ddd',
@@ -199,6 +214,39 @@ function MapComponent({ token }) {
           >
             Search
           </button>
+          {showSuggestions && suggestions.length > 0 && (
+            <ul style={{
+              position: 'absolute',
+              top: '100%',
+              left: '0',
+              right: '0',
+              background: 'white',
+              border: '1px solid #ddd',
+              borderRadius: '3px',
+              listStyle: 'none',
+              margin: '0',
+              padding: '0',
+              maxHeight: '200px',
+              overflowY: 'auto',
+              zIndex: 1001,
+            }}>
+              {suggestions.map((suggestion, index) => (
+                <li
+                  key={index}
+                  onClick={() => handleSelectSuggestion(suggestion)}
+                  style={{
+                    padding: '8px',
+                    cursor: 'pointer',
+                    borderBottom: index < suggestions.length - 1 ? '1px solid #eee' : 'none',
+                  }}
+                  onMouseOver={(e) => e.target.style.background = '#f8f9fa'}
+                  onMouseOut={(e) => e.target.style.background = 'white'}
+                >
+                  {suggestion.display_name}
+                </li>
+              ))}
+            </ul>
+          )}
         </form>
       </div>
       <button
