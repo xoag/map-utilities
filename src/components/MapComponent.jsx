@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, Polygon, FeatureGroup, useMapEvents, useMap } from 'react-leaflet';
 import { EditControl } from 'react-leaflet-draw';
 import 'leaflet-draw/dist/leaflet.draw.css';
-import L from 'leaflet';
+import L, { DivIcon } from 'leaflet';
 
 // Fix default marker icon
 delete L.Icon.Default.prototype._getIconUrl;
@@ -41,6 +41,7 @@ function SetInitialView() {
 function MapComponent({ token }) {
   const [markers, setMarkers] = useState([]);
   const [polygons, setPolygons] = useState([]);
+  const [editingLabel, setEditingLabel] = useState({ index: -1, label: '' });
 
   useEffect(() => {
     if (token) {
@@ -92,14 +93,53 @@ function MapComponent({ token }) {
     const { layerType, layer } = e;
     if (layerType === 'polygon') {
       const coords = layer.getLatLngs()[0].map(latlng => [latlng.lat, latlng.lng]);
-      const newPolygons = [...polygons, coords];
+      const newPolygons = [...polygons, { coords, label: '' }];
       savePolygons(newPolygons);
     }
   };
 
+  const getCenter = (coords) => {
+    const lats = coords.map(c => c[0]);
+    const lngs = coords.map(c => c[1]);
+    const lat = lats.reduce((a, b) => a + b) / lats.length;
+    const lng = lngs.reduce((a, b) => a + b) / lngs.length;
+    return [lat, lng];
+  };
+
+  const handleLabelChange = (index, label) => {
+    setEditingLabel({ index, label });
+  };
+
+  const saveLabel = (index) => {
+    const newPolygons = [...polygons];
+    newPolygons[index].label = editingLabel.label;
+    savePolygons(newPolygons);
+    setEditingLabel({ index: -1, label: '' });
+  };
+
   return (
     <div style={{ position: 'relative' }}>
-      <style dangerouslySetInnerHTML={{__html: `.leaflet-draw-edit-edit, .leaflet-draw-edit-remove { display: none !important; }`}} />
+      <style dangerouslySetInnerHTML={{__html: `
+        .leaflet-draw-edit-edit, .leaflet-draw-edit-remove { display: none !important; }
+        .leaflet-draw-draw-polygon {
+          border-radius: 5px !important;
+          box-shadow: 0 4px 15px rgba(0,0,0,0.2) !important;
+          transition: all 0.3s ease !important;
+        }
+        .leaflet-draw-draw-polygon:hover {
+          transform: translateY(-2px) !important;
+          box-shadow: 0 6px 20px rgba(0,0,0,0.3) !important;
+        }
+        .polygon-label {
+          background: none;
+          border: none;
+          color: black;
+          font-weight: bold;
+          font-size: 14px;
+          text-align: center;
+          pointer-events: none;
+        }
+      `}} />
       <button
         onClick={() => {
           localStorage.removeItem('token');
@@ -110,11 +150,26 @@ function MapComponent({ token }) {
           bottom: '10px',
           left: '10px',
           zIndex: 1000,
-          padding: '10px',
-          background: 'white',
-          border: '1px solid #ccc',
-          cursor: 'pointer',
+          padding: '12px 20px',
+          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+          color: 'white',
+          border: 'none',
           borderRadius: '5px',
+          fontSize: '14px',
+          fontWeight: 'bold',
+          cursor: 'pointer',
+          boxShadow: '0 4px 15px rgba(0,0,0,0.2)',
+          transition: 'all 0.3s ease',
+        }}
+        onMouseOver={(e) => {
+          e.target.style.background = 'linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%)';
+          e.target.style.transform = 'translateY(-2px)';
+          e.target.style.boxShadow = '0 6px 20px rgba(0,0,0,0.3)';
+        }}
+        onMouseOut={(e) => {
+          e.target.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+          e.target.style.transform = 'translateY(0)';
+          e.target.style.boxShadow = '0 4px 15px rgba(0,0,0,0.2)';
         }}
       >
         Logout
@@ -139,14 +194,32 @@ function MapComponent({ token }) {
           </Marker>
         ))}
         {polygons.map((poly, index) => (
-          <Polygon key={index} positions={poly}>
-            <Popup>
-              <button onClick={() => {
-                const newPolygons = polygons.filter((_, i) => i !== index);
-                savePolygons(newPolygons);
-              }}>Delete Polygon</button>
-            </Popup>
-          </Polygon>
+          <div key={index}>
+            <Polygon positions={poly.coords}>
+              <Popup>
+                <div>
+                  <input
+                    type="text"
+                    placeholder="Label"
+                    value={editingLabel.index === index ? editingLabel.label : poly.label}
+                    onChange={(e) => handleLabelChange(index, e.target.value)}
+                  />
+                  <button onClick={() => saveLabel(index)}>Save Label</button>
+                  <br />
+                  <button onClick={() => {
+                    const newPolygons = polygons.filter((_, i) => i !== index);
+                    savePolygons(newPolygons);
+                  }}>Delete Polygon</button>
+                </div>
+              </Popup>
+            </Polygon>
+            {poly.label && (
+              <Marker
+                position={getCenter(poly.coords)}
+                icon={new DivIcon({ html: poly.label, className: 'polygon-label' })}
+              />
+            )}
+          </div>
         ))}
         <FeatureGroup>
           <EditControl

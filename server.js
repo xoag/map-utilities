@@ -25,6 +25,7 @@ db.serialize(() => {
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id INTEGER,
     coords TEXT,
+    label TEXT,
     FOREIGN KEY (user_id) REFERENCES users (id)
   )`);
 
@@ -79,9 +80,9 @@ app.post('/login', (req, res) => {
 
 // Get polygons
 app.get('/polygons', authenticateToken, (req, res) => {
-  db.all('SELECT coords FROM polygons WHERE user_id = ?', [req.user.id], (err, rows) => {
+  db.all('SELECT coords, label FROM polygons WHERE user_id = ?', [req.user.id], (err, rows) => {
     if (err) return res.status(500).json({ error: 'Database error' });
-    const polygons = rows.map(row => JSON.parse(row.coords));
+    const polygons = rows.map(row => ({ coords: JSON.parse(row.coords), label: row.label || '' }));
     res.json(polygons);
   });
 });
@@ -91,9 +92,9 @@ app.post('/polygons', authenticateToken, (req, res) => {
   const { polygons } = req.body;
   db.run('DELETE FROM polygons WHERE user_id = ?', [req.user.id], (err) => {
     if (err) return res.status(500).json({ error: 'Database error' });
-    const stmt = db.prepare('INSERT INTO polygons (user_id, coords) VALUES (?, ?)');
+    const stmt = db.prepare('INSERT INTO polygons (user_id, coords, label) VALUES (?, ?, ?)');
     polygons.forEach(poly => {
-      stmt.run(req.user.id, JSON.stringify(poly));
+      stmt.run(req.user.id, JSON.stringify(poly.coords), poly.label || '');
     });
     stmt.finalize();
     res.json({ message: 'Polygons saved' });
