@@ -99,6 +99,7 @@ function MapComponent({ token }) {
 
   return (
     <div style={{ position: 'relative' }}>
+      <style dangerouslySetInnerHTML={{__html: `.leaflet-draw-edit-edit, .leaflet-draw-edit-remove { display: none !important; }`}} />
       <button
         onClick={() => {
           localStorage.removeItem('token');
@@ -106,13 +107,14 @@ function MapComponent({ token }) {
         }}
         style={{
           position: 'absolute',
-          top: '10px',
+          bottom: '10px',
           left: '10px',
           zIndex: 1000,
           padding: '10px',
           background: 'white',
           border: '1px solid #ccc',
-          cursor: 'pointer'
+          cursor: 'pointer',
+          borderRadius: '5px',
         }}
       >
         Logout
@@ -148,7 +150,7 @@ function MapComponent({ token }) {
         ))}
         <FeatureGroup>
           <EditControl
-            position="topright"
+            position="topleft"
             onCreated={handleCreated}
             draw={{
               rectangle: false,
@@ -158,6 +160,8 @@ function MapComponent({ token }) {
               polygon: true,
               polyline: false,
             }}
+            edit={false}
+            delete={false}
           />
         </FeatureGroup>
       </MapContainer>
