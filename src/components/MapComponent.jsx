@@ -109,6 +109,14 @@ function MapComponent({ token }) {
     }
   };
 
+  function getCenter(coords) {
+    const lats = coords.map(c => c[0]);
+    const lngs = coords.map(c => c[1]);
+    const lat = lats.reduce((a, b) => a + b) / lats.length;
+    const lng = lngs.reduce((a, b) => a + b) / lngs.length;
+    return [lat, lng];
+  }
+
   const calculateArea = (coords) => {
     try {
       // Simple approximation using planar geometry (not geodesic)
