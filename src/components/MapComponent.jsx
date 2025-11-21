@@ -358,13 +358,11 @@ function MapComponent({ token }) {
                     placeholder="Label"
                     value={editingLabel.index === index ? editingLabel.label : poly.label}
                     onChange={(e) => handleLabelChange(index, e.target.value)}
+                    onClick={(e) => e.stopPropagation()}
                   />
-                  <button onClick={() => saveLabel(index)}>Save Label</button>
+                  <button onClick={(e) => { e.stopPropagation(); saveLabel(index); }}>Save Label</button>
                   <br />
-                  <button onClick={() => {
-                    const newPolygons = polygons.filter((_, i) => i !== index);
-                    savePolygons(newPolygons);
-                  }}>Delete Polygon</button>
+                  <button onClick={(e) => { e.stopPropagation(); const newPolygons = polygons.filter((_, i) => i !== index); savePolygons(newPolygons); }}>Delete Polygon</button>
                 </div>
               </Popup>
             </Polygon>
