@@ -183,6 +183,10 @@ function MapComponent({ token }) {
     setEditingLabel({ index: -1, label: '' });
   };
 
+  const handleLabelChange = (index, label) => {
+    setEditingLabel({ index, label });
+  };
+
   return (
     <div style={{ position: 'relative' }}>
       <style dangerouslySetInnerHTML={{__html: `
