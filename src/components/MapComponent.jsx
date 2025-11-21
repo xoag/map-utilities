@@ -12,8 +12,9 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
 });
 
-function MapEvents({ onMarkersChange, onPolygonsChange }) {
+function MapEvents({ onMapClick }) {
   useMapEvents({
+    click: onMapClick,
     move: (e) => {
       const center = e.target.getCenter();
       localStorage.setItem('center', JSON.stringify([center.lat, center.lng]));
@@ -45,6 +46,7 @@ function MapComponent({ token }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [suggestions, setSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [isMarkerMode, setIsMarkerMode] = useState(false);
 
   useEffect(() => {
     if (token) {
@@ -95,9 +97,11 @@ function MapComponent({ token }) {
   };
 
   const handleMapClick = (e) => {
-    const { lat, lng } = e.latlng;
-    const newMarkers = [...markers, { lat, lng }];
-    saveMarkers(newMarkers);
+    if (isMarkerMode) {
+      const { lat, lng } = e.latlng;
+      const newMarkers = [...markers, { lat, lng }];
+      saveMarkers(newMarkers);
+    }
   };
 
   const handleCreated = (e) => {
@@ -158,15 +162,6 @@ function MapComponent({ token }) {
       setSuggestions([]);
       setShowSuggestions(false);
     }
-  };
-
-  const handleSelectSuggestion = (suggestion) => {
-    const { lat, lon } = suggestion;
-    localStorage.setItem('center', JSON.stringify([parseFloat(lat), parseFloat(lon)]));
-    localStorage.setItem('zoom', '15');
-    setSearchQuery(suggestion.display_name);
-    setShowSuggestions(false);
-    window.location.reload();
   };
 
   const handleSearchSubmit = (e) => {
@@ -277,6 +272,34 @@ function MapComponent({ token }) {
           )}
         </form>
       </div>
+      <div style={{
+        position: 'absolute',
+        top: '140px',
+        left: '10px',
+        zIndex: 1000,
+        background: 'white',
+        padding: '5px',
+        borderRadius: '5px',
+        boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
+      }}>
+        <button
+          onClick={() => setIsMarkerMode(!isMarkerMode)}
+          style={{
+            padding: '8px 12px',
+            background: isMarkerMode ? '#dc3545' : '#007bff',
+            color: 'white',
+            border: 'none',
+            borderRadius: '3px',
+            cursor: 'pointer',
+            fontSize: '12px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '5px',
+          }}
+        >
+          📍 {isMarkerMode ? 'Disable Marker Mode' : 'Enable Marker Mode'}
+        </button>
+      </div>
       <button
         onClick={() => {
           window.location.href = '/profile';
@@ -344,9 +367,9 @@ function MapComponent({ token }) {
       >
         Logout
       </button>
-      <MapContainer center={[51.505, -0.09]} zoom={13} style={{ height: '100vh', width: '100%' }} onClick={handleMapClick}>
+      <MapContainer center={[51.505, -0.09]} zoom={13} style={{ height: '100vh', width: '100%' }}>
         <SetInitialView />
-        <MapEvents />
+        <MapEvents onMapClick={handleMapClick} />
         <TileLayer
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
