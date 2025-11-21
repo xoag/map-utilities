@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, Polygon, FeatureGroup, useMapEvents, useMap } from 'react-leaflet';
 import { EditControl } from 'react-leaflet-draw';
 import MarkerClusterGroup from 'react-leaflet-markercluster';
+import { useTheme } from '../contexts/ThemeContext';
 import 'leaflet-draw/dist/leaflet.draw.css';
 import 'react-leaflet-markercluster/styles';
 import L from 'leaflet';
@@ -42,6 +43,7 @@ function SetInitialView() {
 }
 
 function MapComponent({ token }) {
+  const { isDarkMode, toggleTheme, colors } = useTheme();
   const [markers, setMarkers] = useState([]);
   const [polygons, setPolygons] = useState([]);
   const [editingLabel, setEditingLabel] = useState({ index: -1, label: '' });
@@ -204,10 +206,10 @@ function MapComponent({ token }) {
         left: '50%',
         transform: 'translateX(-50%)',
         zIndex: 1000,
-        background: 'white',
+        background: colors.surface,
         padding: '10px',
         borderRadius: '5px',
-        boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
+        boxShadow: `0 2px 10px ${colors.shadow}`,
         display: 'flex',
         flexDirection: 'column',
         gap: '5px',
@@ -221,16 +223,18 @@ function MapComponent({ token }) {
             onChange={(e) => handleSearchInput(e.target.value)}
             style={{
               padding: '8px',
-              border: '1px solid #ddd',
+              border: `1px solid ${colors.border}`,
               borderRadius: '3px',
               width: '200px',
+              background: colors.background,
+              color: colors.text,
             }}
           />
           <button
             type="submit"
             style={{
               padding: '8px 12px',
-              background: '#007bff',
+              background: colors.primary,
               color: 'white',
               border: 'none',
               borderRadius: '3px',
@@ -245,8 +249,8 @@ function MapComponent({ token }) {
               top: '100%',
               left: '0',
               right: '0',
-              background: 'white',
-              border: '1px solid #ddd',
+              background: colors.surface,
+              border: `1px solid ${colors.border}`,
               borderRadius: '3px',
               listStyle: 'none',
               margin: '0',
@@ -264,8 +268,8 @@ function MapComponent({ token }) {
                     cursor: 'pointer',
                     borderBottom: index < suggestions.length - 1 ? '1px solid #eee' : 'none',
                   }}
-                  onMouseOver={(e) => e.target.style.background = '#f8f9fa'}
-                  onMouseOut={(e) => e.target.style.background = 'white'}
+                  onMouseOver={(e) => e.target.style.background = isDarkMode ? '#333333' : '#f8f9fa'}
+                  onMouseOut={(e) => e.target.style.background = colors.surface}
                 >
                   {suggestion.display_name}
                 </li>
@@ -279,16 +283,19 @@ function MapComponent({ token }) {
         top: '140px',
         left: '10px',
         zIndex: 1000,
-        background: 'white',
+        background: colors.surface,
         padding: '5px',
         borderRadius: '5px',
-        boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
+        boxShadow: `0 2px 10px ${colors.shadow}`,
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '5px',
       }}>
         <button
           onClick={() => setIsMarkerMode(!isMarkerMode)}
           style={{
             padding: '8px 12px',
-            background: isMarkerMode ? '#dc3545' : '#007bff',
+            background: isMarkerMode ? '#dc3545' : colors.primary,
             color: 'white',
             border: 'none',
             borderRadius: '3px',
@@ -301,6 +308,23 @@ function MapComponent({ token }) {
         >
           📍 {isMarkerMode ? 'Disable Marker Mode' : 'Enable Marker Mode'}
         </button>
+        <button
+          onClick={toggleTheme}
+          style={{
+            padding: '8px 12px',
+            background: colors.secondary,
+            color: 'white',
+            border: 'none',
+            borderRadius: '3px',
+            cursor: 'pointer',
+            fontSize: '12px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '5px',
+          }}
+        >
+          {isDarkMode ? '☀️ Light Mode' : '🌙 Dark Mode'}
+        </button>
       </div>
       <button
         onClick={() => {
@@ -312,25 +336,25 @@ function MapComponent({ token }) {
           left: '120px',
           zIndex: 1000,
           padding: '12px 20px',
-          background: 'linear-gradient(135deg, #28a745 0%, #20c997 100%)',
+          background: `linear-gradient(135deg, ${colors.secondary} 0%, #20c997 100%)`,
           color: 'white',
           border: 'none',
           borderRadius: '5px',
           fontSize: '14px',
           fontWeight: 'bold',
           cursor: 'pointer',
-          boxShadow: '0 4px 15px rgba(0,0,0,0.2)',
+          boxShadow: `0 4px 15px ${colors.shadow}`,
           transition: 'all 0.3s ease',
         }}
         onMouseOver={(e) => {
-          e.target.style.background = 'linear-gradient(135deg, #218838 0%, #17a2b8 100%)';
+          e.target.style.background = `linear-gradient(135deg, #218838 0%, #17a2b8 100%)`;
           e.target.style.transform = 'translateY(-2px)';
-          e.target.style.boxShadow = '0 6px 20px rgba(0,0,0,0.3)';
+          e.target.style.boxShadow = `0 6px 20px ${colors.shadow}`;
         }}
         onMouseOut={(e) => {
-          e.target.style.background = 'linear-gradient(135deg, #28a745 0%, #20c997 100%)';
+          e.target.style.background = `linear-gradient(135deg, ${colors.secondary} 0%, #20c997 100%)`;
           e.target.style.transform = 'translateY(0)';
-          e.target.style.boxShadow = '0 4px 15px rgba(0,0,0,0.2)';
+          e.target.style.boxShadow = `0 4px 15px ${colors.shadow}`;
         }}
       >
         Profile
@@ -353,18 +377,18 @@ function MapComponent({ token }) {
           fontSize: '14px',
           fontWeight: 'bold',
           cursor: 'pointer',
-          boxShadow: '0 4px 15px rgba(0,0,0,0.2)',
+          boxShadow: `0 4px 15px ${colors.shadow}`,
           transition: 'all 0.3s ease',
         }}
         onMouseOver={(e) => {
           e.target.style.background = 'linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%)';
           e.target.style.transform = 'translateY(-2px)';
-          e.target.style.boxShadow = '0 6px 20px rgba(0,0,0,0.3)';
+          e.target.style.boxShadow = `0 6px 20px ${colors.shadow}`;
         }}
         onMouseOut={(e) => {
           e.target.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
           e.target.style.transform = 'translateY(0)';
-          e.target.style.boxShadow = '0 4px 15px rgba(0,0,0,0.2)';
+          e.target.style.boxShadow = `0 4px 15px ${colors.shadow}`;
         }}
       >
         Logout

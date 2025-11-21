@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTheme } from '../contexts/ThemeContext';
 
 function Register() {
+  const { colors } = useTheme();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -31,21 +33,21 @@ function Register() {
       justifyContent: 'center',
       alignItems: 'center',
       height: '100vh',
-      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+      background: `linear-gradient(135deg, ${colors.primary} 0%, #764ba2 100%)`,
       fontFamily: 'Arial, sans-serif',
     },
     card: {
-      background: 'white',
+      background: colors.surface,
       padding: '40px',
       borderRadius: '10px',
-      boxShadow: '0 10px 25px rgba(0,0,0,0.1)',
+      boxShadow: `0 10px 25px ${colors.shadow}`,
       width: '100%',
       maxWidth: '400px',
       textAlign: 'center',
     },
     title: {
       marginBottom: '30px',
-      color: '#333',
+      color: colors.text,
       fontSize: '28px',
       fontWeight: 'bold',
     },
@@ -53,15 +55,17 @@ function Register() {
       width: '100%',
       padding: '15px',
       margin: '10px 0',
-      border: '1px solid #ddd',
+      border: `1px solid ${colors.border}`,
       borderRadius: '5px',
       fontSize: '16px',
       boxSizing: 'border-box',
+      background: colors.background,
+      color: colors.text,
     },
     button: {
       width: '100%',
       padding: '15px',
-      background: '#667eea',
+      background: colors.primary,
       color: 'white',
       border: 'none',
       borderRadius: '5px',
@@ -74,15 +78,15 @@ function Register() {
       background: '#5a6fd8',
     },
     error: {
-      color: 'red',
+      color: '#dc3545',
       marginTop: '10px',
     },
     message: {
-      color: 'green',
+      color: colors.secondary,
       marginTop: '10px',
     },
     link: {
-      color: '#667eea',
+      color: colors.primary,
       textDecoration: 'none',
       marginTop: '20px',
       display: 'inline-block',
