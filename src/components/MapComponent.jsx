@@ -175,6 +175,15 @@ function MapComponent({ token }) {
     }
   };
 
+  const handleSelectSuggestion = (suggestion) => {
+    const { lat, lon } = suggestion;
+    localStorage.setItem('center', JSON.stringify([parseFloat(lat), parseFloat(lon)]));
+    localStorage.setItem('zoom', '15');
+    setSearchQuery(suggestion.display_name);
+    setShowSuggestions(false);
+    window.location.reload();
+  };
+
   const saveLabel = (index) => {
     const newPolygons = [...polygons];
     newPolygons[index].label = editingLabel.label;
