@@ -51,6 +51,7 @@ function MapComponent({ token }) {
   const [suggestions, setSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [isMarkerMode, setIsMarkerMode] = useState(false);
+  const [isClusteringEnabled, setIsClusteringEnabled] = useState(true);
 
   useEffect(() => {
     if (token) {
@@ -334,6 +335,23 @@ function MapComponent({ token }) {
         >
           {isDarkMode ? '☀️ Light Mode' : '🌙 Dark Mode'}
         </button>
+        <button
+          onClick={() => setIsClusteringEnabled(!isClusteringEnabled)}
+          style={{
+            padding: '8px 12px',
+            background: colors.secondary,
+            color: 'white',
+            border: 'none',
+            borderRadius: '3px',
+            cursor: 'pointer',
+            fontSize: '12px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '5px',
+          }}
+        >
+          {isClusteringEnabled ? '🔗 Disable Clustering' : '🔗 Enable Clustering'}
+        </button>
       </div>
       <button
         onClick={() => {
@@ -409,8 +427,23 @@ function MapComponent({ token }) {
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         />
-        <MarkerClusterGroup>
-          {markers.map((marker, index) => (
+        {isClusteringEnabled ? (
+          <MarkerClusterGroup>
+            {markers.map((marker, index) => (
+              <Marker key={index} position={[marker.lat, marker.lng]}>
+                <Popup>
+                  Marker {index + 1}
+                  <br />
+                  <button onClick={() => {
+                    const newMarkers = markers.filter((_, i) => i !== index);
+                    saveMarkers(newMarkers);
+                  }}>Delete Marker</button>
+                </Popup>
+              </Marker>
+            ))}
+          </MarkerClusterGroup>
+        ) : (
+          markers.map((marker, index) => (
             <Marker key={index} position={[marker.lat, marker.lng]}>
               <Popup>
                 Marker {index + 1}
@@ -421,8 +454,8 @@ function MapComponent({ token }) {
                 }}>Delete Marker</button>
               </Popup>
             </Marker>
-          ))}
-        </MarkerClusterGroup>
+          ))
+        )}
         {polygons.map((poly, index) => (
           <div key={index}>
             <Polygon positions={poly.coords}>
