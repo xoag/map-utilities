@@ -43,6 +43,16 @@ db.serialize(() => {
     lng REAL,
     FOREIGN KEY (user_id) REFERENCES users (id)
   )`);
+
+  db.run(`CREATE TABLE IF NOT EXISTS circles (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER,
+    lat REAL,
+    lng REAL,
+    radius REAL,
+    label TEXT,
+    FOREIGN KEY (user_id) REFERENCES users (id)
+  )`);
 });
 
 // Middleware to verify JWT
@@ -146,6 +156,32 @@ app.post('/markers', authenticateToken, (req, res) => {
     });
     stmt.finalize();
     res.json({ message: 'Markers saved' });
+  });
+});
+
+// Get circles
+app.get('/circles', authenticateToken, (req, res) => {
+  db.all('SELECT lat, lng, radius, label FROM circles WHERE user_id = ?', [req.user.id], (err, rows) => {
+    if (err) {
+      console.log('Database error:', err);
+      return res.status(500).json({ error: 'Database error' });
+    }
+    const circles = rows.map(row => ({ lat: row.lat, lng: row.lng, radius: row.radius, label: row.label || '' }));
+    res.json(circles);
+  });
+});
+
+// Save circles
+app.post('/circles', authenticateToken, (req, res) => {
+  const { circles } = req.body;
+  db.run('DELETE FROM circles WHERE user_id = ?', [req.user.id], (err) => {
+    if (err) return res.status(500).json({ error: 'Database error' });
+    const stmt = db.prepare('INSERT INTO circles (user_id, lat, lng, radius, label) VALUES (?, ?, ?, ?, ?)');
+    circles.forEach(circle => {
+      stmt.run(req.user.id, circle.lat, circle.lng, circle.radius, circle.label || '');
+    });
+    stmt.finalize();
+    res.json({ message: 'Circles saved' });
   });
 });
 

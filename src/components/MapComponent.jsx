@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, Polygon, FeatureGroup, useMapEvents, useMap, LayersControl } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, Polygon, Circle, FeatureGroup, useMapEvents, useMap, LayersControl } from 'react-leaflet';
 import { EditControl } from 'react-leaflet-draw';
 import MarkerClusterGroup from 'react-leaflet-markercluster';
 import { useTheme } from '../contexts/ThemeContext';
@@ -46,7 +46,8 @@ function MapComponent({ token }) {
   const { isDarkMode, toggleTheme, colors } = useTheme();
   const [markers, setMarkers] = useState([]);
   const [polygons, setPolygons] = useState([]);
-  const [editingLabel, setEditingLabel] = useState({ index: -1, label: '' });
+  const [circles, setCircles] = useState([]);
+  const [editingLabel, setEditingLabel] = useState({ index: -1, label: '', type: '' });
   const [searchQuery, setSearchQuery] = useState('');
   const [suggestions, setSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -74,6 +75,16 @@ function MapComponent({ token }) {
         })
         .then(setPolygons)
         .catch(() => setPolygons([]));
+
+      fetch('http://localhost:3001/circles', {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+        .then(res => {
+          if (!res.ok) throw new Error('Failed to fetch circles');
+          return res.json();
+        })
+        .then(setCircles)
+        .catch(() => setCircles([]));
     }
   }, [token]);
 
@@ -101,6 +112,18 @@ function MapComponent({ token }) {
     });
   };
 
+  const saveCircles = (newCircles) => {
+    setCircles(newCircles);
+    fetch('http://localhost:3001/circles', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ circles: newCircles }),
+    });
+  };
+
   const handleMapClick = (e) => {
     if (isMarkerMode) {
       const { lat, lng } = e.latlng;
@@ -115,6 +138,11 @@ function MapComponent({ token }) {
       const coords = layer.getLatLngs()[0].map(latlng => [latlng.lat, latlng.lng]);
       const newPolygons = [...polygons, { coords, label: '' }];
       savePolygons(newPolygons);
+    } else if (layerType === 'circle') {
+      const center = layer.getLatLng();
+      const radius = layer.getRadius();
+      const newCircles = [...circles, { lat: center.lat, lng: center.lng, radius, label: '' }];
+      saveCircles(newCircles);
     }
   };
 
@@ -185,27 +213,33 @@ function MapComponent({ token }) {
     window.location.reload();
   };
 
-  const saveLabel = (index) => {
-    const newPolygons = [...polygons];
-    newPolygons[index].label = editingLabel.label;
-    savePolygons(newPolygons);
-    setEditingLabel({ index: -1, label: '' });
+  const saveLabel = (index, type) => {
+    if (type === 'polygon') {
+      const newPolygons = [...polygons];
+      newPolygons[index].label = editingLabel.label;
+      savePolygons(newPolygons);
+    } else if (type === 'circle') {
+      const newCircles = [...circles];
+      newCircles[index].label = editingLabel.label;
+      saveCircles(newCircles);
+    }
+    setEditingLabel({ index: -1, label: '', type: '' });
   };
 
-  const handleLabelChange = (index, label) => {
-    setEditingLabel({ index, label });
+  const handleLabelChange = (index, label, type) => {
+    setEditingLabel({ index, label, type });
   };
 
   return (
     <div style={{ position: 'relative' }}>
       <style dangerouslySetInnerHTML={{__html: `
         .leaflet-draw-edit-edit, .leaflet-draw-edit-remove { display: none !important; }
-        .leaflet-draw-draw-polygon {
+        .leaflet-draw-draw-polygon, .leaflet-draw-draw-circle {
           border-radius: 5px !important;
           box-shadow: 0 4px 15px rgba(0,0,0,0.2) !important;
           transition: all 0.3s ease !important;
         }
-        .leaflet-draw-draw-polygon:hover {
+        .leaflet-draw-draw-polygon:hover, .leaflet-draw-draw-circle:hover {
           transform: translateY(-2px) !important;
           box-shadow: 0 6px 20px rgba(0,0,0,0.3) !important;
         }
@@ -489,12 +523,12 @@ function MapComponent({ token }) {
                   <input
                     type="text"
                     placeholder="Label"
-                    value={editingLabel.index === index ? editingLabel.label : poly.label}
-                    onChange={(e) => handleLabelChange(index, e.target.value)}
+                    value={editingLabel.index === index && editingLabel.type === 'polygon' ? editingLabel.label : poly.label}
+                    onChange={(e) => handleLabelChange(index, e.target.value, 'polygon')}
                     onClick={(e) => e.stopPropagation()}
                     onKeyDown={(e) => e.stopPropagation()}
                   />
-                  <button onClick={(e) => { e.stopPropagation(); saveLabel(index); }}>Save Label</button>
+                  <button onClick={(e) => { e.stopPropagation(); saveLabel(index, 'polygon'); }}>Save Label</button>
                   <br />
                   <button onClick={(e) => { e.stopPropagation(); const newPolygons = polygons.filter((_, i) => i !== index); savePolygons(newPolygons); }}>Delete Polygon</button>
                 </div>
@@ -508,13 +542,43 @@ function MapComponent({ token }) {
             )}
           </div>
         ))}
+        {circles.map((circle, index) => (
+          <div key={index}>
+            <Circle center={[circle.lat, circle.lng]} radius={circle.radius}>
+              <Popup>
+                <div>
+                  <strong>Circle {index + 1}</strong><br />
+                  Radius: {circle.radius.toFixed(2)} m<br />
+                  Area: {(Math.PI * Math.pow(circle.radius, 2)).toFixed(2)} m²<br />
+                  <input
+                    type="text"
+                    placeholder="Label"
+                    value={editingLabel.index === index && editingLabel.type === 'circle' ? editingLabel.label : circle.label}
+                    onChange={(e) => handleLabelChange(index, e.target.value, 'circle')}
+                    onClick={(e) => e.stopPropagation()}
+                    onKeyDown={(e) => e.stopPropagation()}
+                  />
+                  <button onClick={(e) => { e.stopPropagation(); saveLabel(index, 'circle'); }}>Save Label</button>
+                  <br />
+                  <button onClick={(e) => { e.stopPropagation(); const newCircles = circles.filter((_, i) => i !== index); saveCircles(newCircles); }}>Delete Circle</button>
+                </div>
+              </Popup>
+            </Circle>
+            {circle.label && (
+              <Marker
+                position={[circle.lat, circle.lng]}
+                icon={L.divIcon({ html: `<div style="display: inline-block; background: rgba(65,105,225,0.4); border: 1px solid #ccc; border-radius: 4px; color: red; font-weight: bold; font-size: 14px; padding: 1px 2px; white-space: nowrap; pointer-events: none;">${circle.label}</div>` })}
+              />
+            )}
+          </div>
+        ))}
         <FeatureGroup>
           <EditControl
             position="topleft"
             onCreated={handleCreated}
             draw={{
               rectangle: false,
-              circle: false,
+              circle: true,
               circlemarker: false,
               marker: false,
               polygon: true,
